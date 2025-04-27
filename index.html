@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>旅游地图查询系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <!-- 登录界面，默认显示 -->
+    <div id="login-modal" class="modal">
+      <div class="modal-content">
+        <h2>旅游地图查询系统</h2>
+        <p class="login-desc">请登录以访问系统</p>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" required placeholder="请输入用户名">
+          </div>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" required placeholder="请输入密码">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="action-btn login-btn">登录</button>
+          </div>
+        </form>
+        <div class="login-footer">提示：默认用户名和密码都是 admin</div>
+      </div>
+    </div>
+
+    <!-- 主应用界面，默认隐藏 -->
+    <div id="app" class="hidden">
+      <header class="header">
+        <div class="logo">旅游地图查询系统</div>
+        <div class="search-container">
+          <input type="text" id="search-input" placeholder="搜索旅游景点...">
+          <button id="search-button">搜索</button>
+        </div>
+        <button id="add-poi-btn" class="action-btn add-poi-btn">添加新景点</button>
+        <button id="logout-btn" class="action-btn logout-btn">退出登录</button>
+      </header>
+      
+      <div class="main-container">
+        <div id="map" class="map-container"></div>
+      </div>
+
+      <footer class="footer">
+        技术支持：铜陵学院22地理信息科学
+      </footer>
+
+      <!-- 添加景点弹出框 -->
+      <div id="add-poi-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-modal" id="close-poi-modal">&times;</span>
+          <h2>添加新景点</h2>
+          <form id="add-poi-form">
+            <div class="form-group">
+              <label for="poi-name">名称</label>
+              <input type="text" id="poi-name" required>
+            </div>
+            <div class="form-group">
+              <label for="poi-description">描述</label>
+              <textarea id="poi-description" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="poi-type">类型</label>
+              <select id="poi-type" required>
+                <option value="自然景观">自然景观</option>
+                <option value="历史遗迹">历史遗迹</option>
+                <option value="主题公园">主题公园</option>
+                <option value="文化场所">文化场所</option>
+                <option value="休闲娱乐">休闲娱乐</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="poi-address">地址</label>
+              <input type="text" id="poi-address" required>
+            </div>
+            <div class="form-group">
+              <label for="poi-rating">评分 (1-5)</label>
+              <input type="number" id="poi-rating" min="1" max="5" step="0.1" value="4.0" required>
+            </div>
+            <div class="form-group">
+              <label>坐标位置</label>
+              <div class="coordinates">
+                <input type="text" id="poi-lon" placeholder="经度" required>
+                <input type="text" id="poi-lat" placeholder="纬度" required>
+              </div>
+              <button type="button" id="select-location-btn" class="select-btn">在地图上选择位置</button>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="action-btn">保存</button>
+              <button type="button" id="cancel-poi-btn" class="action-btn cancel-btn">取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
