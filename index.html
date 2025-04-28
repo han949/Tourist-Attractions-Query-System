@@ -1,60 +1,116 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>旅游地图查询系统</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <!-- 登录界面，默认显示 -->
-    <div id="login-modal" class="modal">
-      <div class="modal-content">
-        <h2>旅游地图查询系统</h2>
-        <p class="login-desc">请登录以访问系统</p>
-        <form id="login-form">
-          <div class="form-group">
-            <label for="username">用户名</label>
-            <input type="text" id="username" required placeholder="请输入用户名">
-          </div>
-          <div class="form-group">
-            <label for="password">密码</label>
-            <input type="password" id="password" required placeholder="请输入密码">
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="action-btn login-btn">登录</button>
-          </div>
-        </form>
-        <div class="login-footer">提示：默认用户名和密码都是 admin</div>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>铜陵市旅游地图查询系统</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+  <!-- 登录界面，默认显示 -->
+  <!-- <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <h2>旅游地图查询系统</h2>
+      <p class="login-desc">请登录以访问系统</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" required placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" required placeholder="请输入密码">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="action-btn login-btn">登录</button>
+        </div>
+      </form>
+      <div class="login-footer">提示：默认用户名和密码都是 admin</div>
+    </div>
+  </div> -->
+  <!-- 登录界面 -->
+  <div id="login-modal" class="modal">
+    <div class="login-background"></div>
+    <div class="modal-content login-content">
+      <div class="login-logo">
+        <i class="fas fa-map-marked-alt"></i>
+        <h1>铜陵市旅游地图</h1>
+      </div>
+      <h2>用户登录</h2>
+      <p class="login-desc">欢迎使用铜陵市旅游地图查询系统</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username"><i class="fas fa-user"></i> 用户名</label>
+          <input type="text" id="username" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label for="password"><i class="fas fa-lock"></i> 密码</label>
+          <input type="password" id="password" placeholder="请输入密码" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="action-btn login-btn">登录系统</button>
+        </div>
+        <div class="login-footer">
+          <p class="hint">提示：默认用户名和密码都是 admin</p>
+          <p class="copyright">© 2025 铜陵市旅游地图系统 版权所有</p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主应用界面，默认隐藏 -->
+  <div id="app" class="hidden">
+    <header class="header">
+      <div class="logo"><i class="fas fa-map-marked-alt"></i> 铜陵市旅游地图查询系统</div>
+      <div class="search-container">
+        <div class="search-input-container">
+          <input type="text" id="search-input" placeholder="搜索景点名称、类型或地址...">
+          <button id="search-button">
+            <i class="fas fa-search"></i>
+          </button>
+          <button id="dropdown-toggle" class="dropdown-toggle">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div id="search-results" class="search-results"></div>
+      </div>
+      <div class="header-buttons">
+        <button id="filter-poi-btn" class="action-btn filter-btn"><i class="fas fa-filter"></i> 筛选景点</button>
+        <button id="add-poi-btn" class="action-btn add-poi-btn"><i class="fas fa-plus"></i> 添加景点</button>
+        <button id="logout-btn" class="action-btn logout-btn"><i class="fas fa-sign-out-alt"></i> 退出</button>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div id="map" class="map-container"></div>
+      <!-- 地图控制按钮组 -->
+      <div class="map-controls">
+        <button id="toggle-boundary-btn" class="control-btn" title="切换边界">
+          <i class="fas fa-border-all"></i>
+          <span></span>
+        </button>
       </div>
     </div>
 
-    <!-- 主应用界面，默认隐藏 -->
-    <div id="app" class="hidden">
-      <header class="header">
-        <div class="logo">旅游地图查询系统</div>
-        <div class="search-container">
-          <input type="text" id="search-input" placeholder="搜索旅游景点...">
-          <button id="search-button">搜索</button>
-        </div>
-        <button id="add-poi-btn" class="action-btn add-poi-btn">添加新景点</button>
-        <button id="logout-btn" class="action-btn logout-btn">退出登录</button>
-      </header>
-      
-      <div class="main-container">
-        <div id="map" class="map-container"></div>
-      </div>
+    <footer class="footer">
+      技术支持:铜陵学院22地理信息科学
+    </footer>
 
-      <footer class="footer">
-        技术支持：铜陵学院22地理信息科学
-      </footer>
 
-      <!-- 添加景点弹出框 -->
-      <div id="add-poi-modal" class="modal hidden">
-        <div class="modal-content">
+    <!-- 添加景点弹出框 -->
+    <div id="add-poi-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-plus-circle"></i> 添加新景点</h2>
           <span class="close-modal" id="close-poi-modal">&times;</span>
-          <h2>添加新景点</h2>
+        </div>
+        <div class="modal-body">
           <form id="add-poi-form">
             <div class="form-group">
               <label for="poi-name">名称</label>
@@ -82,22 +138,158 @@
               <label for="poi-rating">评分 (1-5)</label>
               <input type="number" id="poi-rating" min="1" max="5" step="0.1" value="4.0" required>
             </div>
-            <div class="form-group">
-              <label>坐标位置</label>
-              <div class="coordinates">
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="poi-lon">经度</label>
                 <input type="text" id="poi-lon" placeholder="经度" required>
+              </div>
+              <div class="form-group half">
+                <label for="poi-lat">纬度</label>
                 <input type="text" id="poi-lat" placeholder="纬度" required>
               </div>
-              <button type="button" id="select-location-btn" class="select-btn">在地图上选择位置</button>
             </div>
+            <button type="button" id="select-location-btn" class="select-btn"><i class="fas fa-map-marker-alt"></i>
+              在地图上选择位置</button>
             <div class="form-actions">
-              <button type="submit" class="action-btn">保存</button>
-              <button type="button" id="cancel-poi-btn" class="action-btn cancel-btn">取消</button>
+              <button type="submit" class="action-btn"><i class="fas fa-save"></i> 保存</button>
+              <button type="button" id="cancel-poi-btn" class="action-btn cancel-btn"><i class="fas fa-times"></i>
+                取消</button>
             </div>
           </form>
         </div>
       </div>
     </div>
-    <script type="module" src="./main.js"></script>
-  </body>
+
+    <!-- 筛选景点弹出框 -->
+    <div id="filter-poi-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-filter"></i> 筛选景点</h2>
+          <span class="close-modal" id="close-filter-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="filter-poi-form">
+            <div class="form-group">
+              <label for="filter-type">景点类型</label>
+              <select id="filter-type">
+                <option value="">全部类型</option>
+                <option value="自然景观">自然景观</option>
+                <option value="历史遗迹">历史遗迹</option>
+                <option value="主题公园">主题公园</option>
+                <option value="文化场所">文化场所</option>
+                <option value="休闲娱乐">休闲娱乐</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="filter-rating">最低评分</label>
+              <input type="number" id="filter-rating" min="1" max="5" step="0.1" value="1">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="action-btn"><i class="fas fa-search"></i> 筛选</button>
+              <button type="button" id="reset-filter-btn" class="action-btn"><i class="fas fa-redo"></i> 重置</button>
+              <button type="button" id="cancel-filter-btn" class="action-btn cancel-btn"><i class="fas fa-times"></i>
+                取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- 编辑景点弹出框 -->
+    <div id="edit-poi-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-edit"></i> 编辑景点</h2>
+          <span class="close-modal" id="close-edit-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="edit-poi-form">
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+              <label for="edit-name">名称</label>
+              <input type="text" id="edit-name" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-description">描述</label>
+              <textarea id="edit-description" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="edit-type">类型</label>
+              <select id="edit-type" required>
+                <option value="自然景观">自然景观</option>
+                <option value="历史遗迹">历史遗迹</option>
+                <option value="主题公园">主题公园</option>
+                <option value="文化场所">文化场所</option>
+                <option value="休闲娱乐">休闲娱乐</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-address">地址</label>
+              <input type="text" id="edit-address" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-rating">评分 (1-5)</label>
+              <input type="number" id="edit-rating" min="1" max="5" step="0.1" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="edit-lon">经度</label>
+                <input type="text" id="edit-lon" required>
+              </div>
+              <div class="form-group half">
+                <label for="edit-lat">纬度</label>
+                <input type="text" id="edit-lat" required>
+              </div>
+            </div>
+            <button type="button" id="edit-select-location-btn" class="select-btn"><i class="fas fa-map-marker-alt"></i>
+              在地图上选择位置</button>
+            <div class="form-actions">
+              <button type="button" id="delete-poi-btn" class="action-btn delete-btn"><i class="fas fa-trash"></i>
+                删除</button>
+              <button type="submit" class="action-btn"><i class="fas fa-save"></i> 更新</button>
+              <button type="button" id="cancel-edit-btn" class="action-btn cancel-btn"><i class="fas fa-times"></i>
+                取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 添加到HTML body中，可以放在地图容器旁边 -->
+  <div id="map-legend" class="map-legend">
+    <h3>景点类型</h3>
+    <div id="legend-items" class="legend-items"></div>
+  </div>
+
+  <!-- 添加回到初始位置的按钮 -->
+  <div id="reset-view-btn" class="reset-view-btn" title="回到初始视图">
+    <i class="fas fa-home"></i>
+  </div>
+
+
+  <!-- 添加到body中适当位置，比如在地图容器旁边 -->
+  <div id="charts-panel" class="charts-panel">
+    <div class="charts-header">
+      <h3>景点概览</h3>
+      <button id="toggle-charts-btn" class="toggle-btn">
+        <i class="fas fa-chevron-up"></i>
+      </button>
+    </div>
+    <div class="charts-content">
+      <div class="chart-tabs">
+        <button id="type-dist-tab" class="chart-tab active">类型分布</button>
+        <button id="type-rating-tab" class="chart-tab">类型评分</button>
+      </div>
+      <div class="chart-container">
+        <div id="type-dist-chart" class="chart"></div>
+        <div id="type-rating-chart" class="chart hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+
 </html>

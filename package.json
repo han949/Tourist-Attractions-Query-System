@@ -18,8 +18,11 @@
     "axios": "^1.9.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
+    "echarts": "^5.6.0",
     "express": "^4.21.2",
     "ol": "latest",
+    "ol-ext": "^4.0.31",
+    "ol-mapbox-style": "^12.6.0",
     "pg": "^8.15.6"
   }
 }

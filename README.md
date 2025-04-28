@@ -61,7 +61,7 @@ npm install
 npm start
 
 # 启动后端服务
-npm run server
+node server/index.js
 ```
 
 前端访问地址: http://localhost:5173
@@ -97,3 +97,5 @@ npm run build
 ## 许可证
 
 [MIT](LICENSE)
+
+

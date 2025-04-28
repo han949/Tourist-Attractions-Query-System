@@ -47,15 +47,33 @@ app.get('/pois', async (req, res) => {
 // 添加新景点
 app.post('/pois', async (req, res) => {
   const { name, description, type, address, rating, longitude, latitude } = req.body;
+  
+  // 数据验证
+  if (!name || !longitude || !latitude) {
+    return res.status(400).json({ error: '名称、经度和纬度是必填项' });
+  }
+  
+  // 确保数值型数据正确处理
+  const parsedRating = rating ? parseFloat(rating) : null;
+  const parsedLongitude = parseFloat(longitude);
+  const parsedLatitude = parseFloat(latitude);
+  
+  // 验证经纬度范围
+  if (isNaN(parsedLongitude) || isNaN(parsedLatitude) || 
+      parsedLongitude < -180 || parsedLongitude > 180 || 
+      parsedLatitude < -90 || parsedLatitude > 90) {
+    return res.status(400).json({ error: '无效的经纬度坐标' });
+  }
+  
   try {
     const result = await pool.query(
       'INSERT INTO pois (name, description, type, address, rating, longitude, latitude) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [name, description, type, address, rating, longitude, latitude]
+      [name, description || '', type || '', address || '', parsedRating, parsedLongitude, parsedLatitude]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('添加景点失败', err);
-    res.status(500).send('服务器错误');
+    res.status(500).json({ error: '服务器错误: ' + err.message });
   }
 });
 
