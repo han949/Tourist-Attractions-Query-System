@@ -16,7 +16,7 @@
     "@mui/icons-material": "^5.17.1",
     "@mui/material": "^5.17.1",
     "axios": "^1.9.0",
-    "body-parser": "^1.20.3",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "echarts": "^5.6.0",
     "express": "^4.21.2",
