@@ -100,7 +100,7 @@ const vectorLayer = new VectorLayer({
   style: function (feature) {
     return createPointStyle(feature.get('type'));
   },
-  zIndex:10
+  zIndex: 10
 });
 
 // 创建比例尺和坐标显示的DOM容器
@@ -150,18 +150,18 @@ const map = new Map({
       type: 'base'
     }),
 
-  // // 使用OpenStreetMap作为底图，使用经纬度坐标系
-  // new TileLayer({
-  //   source: new OSM()
-  // }),
-  vectorLayer
+    // // 使用OpenStreetMap作为底图，使用经纬度坐标系
+    // new TileLayer({
+    //   source: new OSM()
+    // }),
+    vectorLayer
   ],
-view: new View({
-  center: initialView.center,
-  zoom: initialView.zoom,
-  maxZoom: 19,
-  projection: 'EPSG:4326' // 使用经纬度坐标系
-}),
+  view: new View({
+    center: initialView.center,
+    zoom: initialView.zoom,
+    maxZoom: 19,
+    projection: 'EPSG:4326' // 使用经纬度坐标系
+  }),
   controls: defaultControls().extend([
     // 比例尺移到左下角
     new ScaleLine({
@@ -215,6 +215,18 @@ popupCloser.addEventListener('click', (event) => {
   event.preventDefault();
 });
 
+// 获取景点图片路径的函数
+function getPOIImagePath(poi) {
+  // 尝试多种可能的图片命名方式
+  const possibleNames = [
+    `./public/image/${poi.id}.jpg`,                        // 使用ID直接匹配
+    `./public/image/poi_${poi.id}.jpg`,                    // 使用poi_ID格式
+    `./public/image/${encodeURIComponent(poi.name)}.jpg`   // 使用名称匹配
+  ];
+
+  return possibleNames[0]; // 默认使用第一种命名方式
+}
+
 // 点击地图显示景点详情
 map.on('singleclick', (event) => {
   // 隐藏任何打开的坐标选择器
@@ -233,11 +245,49 @@ map.on('singleclick', (event) => {
       const ratingStars = '★'.repeat(Math.floor(properties.rating)) +
         (properties.rating % 1 >= 0.5 ? '½' : '') +
         '☆'.repeat(5 - Math.ceil(properties.rating));
+      // 获取图片路径
+      const imagePath = getPOIImagePath({
+        id: properties.id,
+        name: properties.name
+      });
 
+      //   const content = `
+      //     <div class="popup-header">
+      //       <h4>${properties.name}</h4>
+      //       <div class="rating" title="${properties.rating}分">${ratingStars}</div>
+      //     </div>
+      //     <div class="popup-body">
+      //       <p class="description">${properties.description || ''}</p>
+      //       <div class="info-grid">
+      //         <div class="info-item">
+      //           <i class="fas fa-tag"></i>
+      //           <span>${properties.type || '未知'}</span>
+      //         </div>
+      //         <div class="info-item">
+      //           <i class="fas fa-map-marker-alt"></i>
+      //           <span>${properties.address || '未知'}</span>
+      //         </div>
+      //       </div>
+      //       <div class="popup-actions">
+      //         <button onclick="editPOI(${properties.id})" class="action-btn">
+      //           <i class="fas fa-edit"></i> 编辑
+      //         </button>
+      //       </div>
+      //     </div>
+      //   `;
+
+      //   popupContent.innerHTML = content;
+      //   popup.setPosition(event.coordinate);
+      // }
       const content = `
         <div class="popup-header">
           <h4>${properties.name}</h4>
           <div class="rating" title="${properties.rating}分">${ratingStars}</div>
+        </div>
+        <div class="popup-image">
+          <img src="${imagePath}" 
+               alt="${properties.name}" 
+               onerror="this.src='./public/image/default.jpg'; console.log('图片加载失败，ID: ${properties.id}, 名称: ${properties.name}');">
         </div>
         <div class="popup-body">
           <p class="description">${properties.description || ''}</p>
@@ -259,6 +309,7 @@ map.on('singleclick', (event) => {
         </div>
       `;
 
+      console.log("尝试加载景点图片:", imagePath, "景点ID:", properties.id);
       popupContent.innerHTML = content;
       popup.setPosition(event.coordinate);
     }
@@ -505,17 +556,32 @@ searchInput.addEventListener('input', () => {
         zoom: 12,
         duration: 1000
       });
+      // 获取图片路径
+      const imagePath = getPOIImagePath({
+        id: props.id,
+        name: props.name
+      });
 
       // 显示弹出框
       const ratingStars = '★'.repeat(Math.floor(props.rating)) +
         (props.rating % 1 >= 0.5 ? '½' : '') +
         '☆'.repeat(5 - Math.ceil(props.rating));
 
+      // const content = `
+      //   <div class="popup-header">
+      //     <h4>${props.name}</h4>
+      //     <div class="rating" title="${props.rating}分">${ratingStars}</div>
+      //   </div>
       const content = `
-        <div class="popup-header">
-          <h4>${props.name}</h4>
-          <div class="rating" title="${props.rating}分">${ratingStars}</div>
-        </div>
+    <div class="popup-header">
+      <h4>${props.name}</h4>
+      <div class="rating" title="${props.rating}分">${ratingStars}</div>
+    </div>
+    <div class="popup-image">
+      <img src="${imagePath}" 
+           alt="${props.name}" 
+           onerror="this.src='./public/image/default.jpg'; console.log('图片加载失败，ID: ${props.id}, 名称: ${props.name}');">
+    </div>
         <div class="popup-body">
           <p class="description">${props.description || ''}</p>
           <div class="info-grid">
@@ -538,6 +604,7 @@ searchInput.addEventListener('input', () => {
 
       popupContent.innerHTML = content;
       popup.setPosition(coordinates);
+
 
       // 隐藏下拉菜单并清空搜索框
       searchResults.style.display = 'none';
@@ -1230,6 +1297,11 @@ function displayAllPOIs() {
     resultItem.addEventListener('click', () => {
       const geometry = feature.getGeometry();
       const coordinates = geometry.getCoordinates();
+      // 获取图片路径
+      const imagePath = getPOIImagePath({
+        id: props.id,
+        name: props.name
+      });
 
       // 跳转到该景点
       map.getView().animate({
@@ -1243,11 +1315,21 @@ function displayAllPOIs() {
         (props.rating % 1 >= 0.5 ? '½' : '') +
         '☆'.repeat(5 - Math.ceil(props.rating));
 
+      // const content = `
+      //   <div class="popup-header">
+      //     <h4>${props.name}</h4>
+      //     <div class="rating" title="${props.rating}分">${ratingStars}</div>
+      //   </div>
       const content = `
-        <div class="popup-header">
-          <h4>${props.name}</h4>
-          <div class="rating" title="${props.rating}分">${ratingStars}</div>
-        </div>
+      <div class="popup-header">
+        <h4>${props.name}</h4>
+        <div class="rating" title="${props.rating}分">${ratingStars}</div>
+      </div>
+      <div class="popup-image">
+        <img src="${imagePath}" 
+             alt="${props.name}" 
+             onerror="this.src='./public/image/default.jpg'; console.log('图片加载失败，ID: ${props.id}, 名称: ${props.name}');">
+      </div>
         <div class="popup-body">
           <p class="description">${props.description || ''}</p>
           <div class="info-grid">
@@ -1267,6 +1349,20 @@ function displayAllPOIs() {
           </div>
         </div>
       `;
+      // 找到生成弹出框内容的代码，通常在处理地图点击或搜索结果点击的部分
+      // 可能在vectorSource.on('addfeature', ...) 或地图点击事件中
+      // 获取景点图片路径的函数
+      function getPOIImagePath(poi) {
+        // 尝试多种可能的图片命名方式
+        const possibleNames = [
+          `./public/image/${poi.id}.jpg`,                        // 使用ID直接匹配
+          `./public/image/poi_${poi.id}.jpg`,                    // 使用poi_ID格式
+          `./public/image/${encodeURIComponent(poi.name)}.jpg`   // 使用名称匹配
+        ];
+
+        return possibleNames[0]; // 默认使用第一种命名方式
+      }
+
 
       popupContent.innerHTML = content;
       popup.setPosition(coordinates);
@@ -1311,7 +1407,7 @@ async function loadBoundary() {
     // 从公共目录加载GeoJSON文件
     const response = await fetch('./public/tl.geojson');
     const geojsonData = await response.json();
-    
+
     // 创建边界数据源
     tlBoundarySource = new VectorSource({
       features: new GeoJSON().readFeatures(geojsonData, {
@@ -1320,7 +1416,7 @@ async function loadBoundary() {
         featureProjection: 'EPSG:4326' // 地图使用的是EPSG:4326坐标系
       })
     });
-    
+
     // 创建边界图层
     tlBoundaryLayer = new VectorLayer({
       title: '铜陵市边界',
@@ -1338,24 +1434,24 @@ async function loadBoundary() {
       }),
       zIndex: 1 // 确保边界在底图之上，但在POI图层之下
     });
-    
+
     // 将边界图层添加到地图
     map.addLayer(tlBoundaryLayer);
-    
+
     // 可选：调整视图到边界范围
     const extent = tlBoundarySource.getExtent();
     map.getView().fit(extent, {
       padding: [50, 50, 50, 50],
       duration: 1000
     });
-    
+
   } catch (err) {
     console.error('加载铜陵市边界失败', err);
   }
 }
 // 在JavaScript中添加控制逻辑
 // 在文件的适当位置添加以下代码
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // 确保元素存在
   const toggleBoundaryBtn = document.getElementById('toggle-boundary-btn');
   if (toggleBoundaryBtn) {
@@ -1363,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (tlBoundaryLayer) {
         const visible = tlBoundaryLayer.getVisible();
         tlBoundaryLayer.setVisible(!visible);
-        
+
         // 更新按钮样式
         if (!visible) {
           toggleBoundaryBtn.classList.add('active');

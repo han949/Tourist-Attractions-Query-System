@@ -1399,3 +1399,41 @@ header {
     right: 5px;
   }
 }
+
+/* 弹出框图片样式 */
+.popup-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  position: relative;
+}
+
+.popup-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.popup-image:hover img {
+  transform: scale(1.05);
+}
+
+/* 适应小屏幕 */
+@media (max-width: 768px) {
+  .popup-image {
+    height: 140px;
+  }
+}
+
+/* 图片加载失败的样式 */
+.popup-image img.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f1f1;
+  color: #888;
+  font-size: 14px;
+}
