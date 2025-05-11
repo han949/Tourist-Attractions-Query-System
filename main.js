@@ -6,7 +6,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Point } from 'ol/geom';
 import { Feature } from 'ol';
-import { Icon, Style, Circle, Fill, Stroke } from 'ol/style';
+import { Icon, Style, Circle, Fill, Stroke, Text } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import axios from 'axios';
 import { defaults as defaultControls, ScaleLine, FullScreen, ZoomToExtent, MousePosition } from 'ol/control';
@@ -17,6 +17,7 @@ import { transform } from 'ol/proj';
 import XYZ from 'ol/source/XYZ';
 import * as echarts from 'echarts';
 import GeoJSON from 'ol/format/GeoJSON';
+
 
 
 // 后端 API 基础 URL
@@ -77,11 +78,28 @@ function getColorByType(type) {
   return typeColors[type] || defaultColor;
 }
 
+
 // 为特定类型创建样式
-function createPointStyle(type) {
+function createPointStyle(type, name, zoom) {
+  // 根据缩放级别调整点和文本的大小
+  let radius = 8;
+  let fontSize = '12px';
+  let offsetY = -15;
+
+  // 缩放级别越大，标记和文字也可以相应变大
+  if (zoom >= 14) {
+    radius = 10;
+    fontSize = '14px';
+    offsetY = -18;
+  } else if (zoom >= 12) {
+    radius = 9;
+    fontSize = '13px';
+    offsetY = -16;
+  }
+
   return new Style({
     image: new Circle({
-      radius: 8,
+      radius: radius,
       fill: new Fill({
         color: getColorByType(type)
       }),
@@ -89,7 +107,21 @@ function createPointStyle(type) {
         color: '#FFFFFF',
         width: 2
       })
-    })
+    }),
+    text: name ? new Text({
+      text: name,
+      font: `${fontSize} Calibri,sans-serif`,
+      fill: new Fill({
+        color: '#000'
+      }),
+      stroke: new Stroke({
+        color: '#fff',
+        width: 2
+      }),
+      offsetY: offsetY,
+      textAlign: 'center',
+      textBaseline: 'bottom'
+    }) : undefined
   });
 }
 
@@ -98,10 +130,20 @@ const vectorSource = new VectorSource();
 const vectorLayer = new VectorLayer({
   source: vectorSource,
   style: function (feature) {
-    return createPointStyle(feature.get('type'));
+    const zoom = map.getView().getZoom();
+    // 根据缩放级别决定是否显示名称
+    const showLabel = zoom > 11;
+    return createPointStyle(feature.get('type'), showLabel ? feature.get('name') : null, zoom);
   },
   zIndex: 10
 });
+
+
+
+
+
+
+
 
 // 创建比例尺和坐标显示的DOM容器
 const scaleLineElement = document.createElement('div');
@@ -251,34 +293,7 @@ map.on('singleclick', (event) => {
         name: properties.name
       });
 
-      //   const content = `
-      //     <div class="popup-header">
-      //       <h4>${properties.name}</h4>
-      //       <div class="rating" title="${properties.rating}分">${ratingStars}</div>
-      //     </div>
-      //     <div class="popup-body">
-      //       <p class="description">${properties.description || ''}</p>
-      //       <div class="info-grid">
-      //         <div class="info-item">
-      //           <i class="fas fa-tag"></i>
-      //           <span>${properties.type || '未知'}</span>
-      //         </div>
-      //         <div class="info-item">
-      //           <i class="fas fa-map-marker-alt"></i>
-      //           <span>${properties.address || '未知'}</span>
-      //         </div>
-      //       </div>
-      //       <div class="popup-actions">
-      //         <button onclick="editPOI(${properties.id})" class="action-btn">
-      //           <i class="fas fa-edit"></i> 编辑
-      //         </button>
-      //       </div>
-      //     </div>
-      //   `;
 
-      //   popupContent.innerHTML = content;
-      //   popup.setPosition(event.coordinate);
-      // }
       const content = `
         <div class="popup-header">
           <h4>${properties.name}</h4>
@@ -567,11 +582,7 @@ searchInput.addEventListener('input', () => {
         (props.rating % 1 >= 0.5 ? '½' : '') +
         '☆'.repeat(5 - Math.ceil(props.rating));
 
-      // const content = `
-      //   <div class="popup-header">
-      //     <h4>${props.name}</h4>
-      //     <div class="rating" title="${props.rating}分">${ratingStars}</div>
-      //   </div>
+
       const content = `
     <div class="popup-header">
       <h4>${props.name}</h4>
@@ -951,8 +962,7 @@ function createLegend() {
 createLegend();
 
 
-// 导入ECharts (如果还没有导入)
-// import * as echarts from 'echarts';
+
 
 // 声明图表变量
 let typeDistChart = null;
@@ -1315,11 +1325,7 @@ function displayAllPOIs() {
         (props.rating % 1 >= 0.5 ? '½' : '') +
         '☆'.repeat(5 - Math.ceil(props.rating));
 
-      // const content = `
-      //   <div class="popup-header">
-      //     <h4>${props.name}</h4>
-      //     <div class="rating" title="${props.rating}分">${ratingStars}</div>
-      //   </div>
+
       const content = `
       <div class="popup-header">
         <h4>${props.name}</h4>
@@ -1349,9 +1355,7 @@ function displayAllPOIs() {
           </div>
         </div>
       `;
-      // 找到生成弹出框内容的代码，通常在处理地图点击或搜索结果点击的部分
-      // 可能在vectorSource.on('addfeature', ...) 或地图点击事件中
-      // 获取景点图片路径的函数
+
       function getPOIImagePath(poi) {
         // 尝试多种可能的图片命名方式
         const possibleNames = [
@@ -1471,4 +1475,11 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     console.error('边界切换按钮未找到');
   }
+});
+
+
+
+// 在地图视图变化时更新标签
+map.getView().on('change:resolution', function () {
+  vectorLayer.changed();
 });
