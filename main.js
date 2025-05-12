@@ -139,12 +139,6 @@ const vectorLayer = new VectorLayer({
 });
 
 
-
-
-
-
-
-
 // 创建比例尺和坐标显示的DOM容器
 const scaleLineElement = document.createElement('div');
 scaleLineElement.className = 'ol-scale-line-container';
@@ -157,47 +151,77 @@ document.body.appendChild(mousePositionElement);
 // 保存地图初始视图状态
 const initialView = {
   center: [117.856425, 30.964859], // 铜陵市中心坐标，根据您的需求调整
-  zoom: 11 // 初始缩放级别
+  zoom: 10 // 初始缩放级别
 };
 // 天地图密钥
 const tdtKey = '8497ab2e9d309d60b93398a1bfa25f10';
+
+
+// 创建底图组 - 放在初始化地图之前
+const baseMaps = {
+  vector: new TileLayer({
+    title: '矢量底图',
+    source: new XYZ({
+      url: `http://t0.tianditu.gov.cn/vec_w/wmts?layer=vec&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
+    }),
+    visible: true,
+    type: 'base'
+  }),
+  
+  image: new TileLayer({
+    title: '影像底图',
+    source: new XYZ({
+      url: `http://t0.tianditu.gov.cn/img_w/wmts?layer=img&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
+    }),
+    visible: false,
+    type: 'base'
+  }),
+  
+  terrain: new TileLayer({
+    title: '地形底图',
+    source: new XYZ({
+      url: `http://t0.tianditu.gov.cn/ter_w/wmts?layer=ter&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
+    }),
+    visible: false,
+    type: 'base'
+  })
+};
+
+// 创建标注图层 - 这个图层会叠加在底图上显示地名
+const annotationLayer = new TileLayer({
+  title: '地名标注',
+  source: new XYZ({
+    url: `http://t0.tianditu.gov.cn/cva_w/wmts?layer=cva&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
+  }),
+  visible: true
+});
+
+// 创建影像标注图层 - 与影像底图配合使用
+const imageAnnotationLayer = new TileLayer({
+  title: '影像标注',
+  source: new XYZ({
+    url: `http://t0.tianditu.gov.cn/cia_w/wmts?layer=cia&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
+  }),
+  visible: false
+});
 // 初始化地图，使用经纬度坐标系
 const map = new Map({
   target: 'map',
+  
   layers: [
-    // 矢量底图（天地图矢量）
-    new TileLayer({
-      title: '天地图矢量',
-      source: new XYZ({
-        url: `http://t0.tianditu.gov.cn/vec_w/wmts?layer=vec&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
-      }),
-      visible: true,
-      type: 'base'
-    }),
-    //标注图层
-    new TileLayer({
-      title: '地名标注',
-      source: new XYZ({
-        url: `http://t0.tianditu.gov.cn/cva_w/wmts?layer=cva&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
-      }),
-      visible: true
-    }),
-    // 地形底图（天地图地形）
-    new TileLayer({
-      title: '天地图地形',
-      source: new XYZ({
-        url: `http://t0.tianditu.gov.cn/ter_w/wmts?layer=ter&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
-      }),
-      visible: false,
-      type: 'base'
-    }),
-
-    // // 使用OpenStreetMap作为底图，使用经纬度坐标系
-    // new TileLayer({
-    //   source: new OSM()
-    // }),
+    // 添加所有底图图层
+    baseMaps.vector,
+    baseMaps.image,
+    baseMaps.terrain,
+    
+    // 添加标注图层
+    annotationLayer,
+    imageAnnotationLayer,
+    
+    // 添加矢量图层
     vectorLayer
   ],
+
   view: new View({
     center: initialView.center,
     zoom: initialView.zoom,
@@ -1482,4 +1506,229 @@ document.addEventListener('DOMContentLoaded', function () {
 // 在地图视图变化时更新标签
 map.getView().on('change:resolution', function () {
   vectorLayer.changed();
+});
+
+// 底图切换逻辑 - 确保在DOM加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+  const vectorMapBtn = document.getElementById('vector-map-btn');
+  const imageMapBtn = document.getElementById('image-map-btn');
+  const terrainMapBtn = document.getElementById('terrain-map-btn');
+  
+  // 切换到矢量地图
+  vectorMapBtn.addEventListener('click', function() {
+    // 激活当前按钮
+    vectorMapBtn.classList.add('active');
+    imageMapBtn.classList.remove('active');
+    terrainMapBtn.classList.remove('active');
+    
+    // 显示矢量地图和对应标注
+    baseMaps.vector.setVisible(true);
+    baseMaps.image.setVisible(false);
+    baseMaps.terrain.setVisible(false);
+    
+    // 切换标注图层
+    annotationLayer.setVisible(true);
+    imageAnnotationLayer.setVisible(false);
+  });
+  
+  // 切换到影像地图
+  imageMapBtn.addEventListener('click', function() {
+    // 激活当前按钮
+    vectorMapBtn.classList.remove('active');
+    imageMapBtn.classList.add('active');
+    terrainMapBtn.classList.remove('active');
+    
+    // 显示影像地图和对应标注
+    baseMaps.vector.setVisible(false);
+    baseMaps.image.setVisible(true);
+    baseMaps.terrain.setVisible(false);
+    
+    // 切换标注图层
+    annotationLayer.setVisible(false);
+    imageAnnotationLayer.setVisible(true);
+  });
+  
+  // 切换到地形地图
+  terrainMapBtn.addEventListener('click', function() {
+    // 激活当前按钮
+    vectorMapBtn.classList.remove('active');
+    imageMapBtn.classList.remove('active');
+    terrainMapBtn.classList.add('active');
+    
+    // 显示地形地图和对应标注
+    baseMaps.vector.setVisible(false);
+    baseMaps.image.setVisible(false);
+    baseMaps.terrain.setVisible(true);
+    
+    // 切换标注图层
+    annotationLayer.setVisible(true); // 地形图使用普通标注
+    imageAnnotationLayer.setVisible(false);
+  });
+});
+
+// 创建全局变量
+let is3DMode = false;
+let viewer; // Cesium viewer
+
+// 初始化Cesium
+function initCesium() {
+  // 配置Cesium访问令牌 (需要从 https://cesium.com/ion/ 获取)
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZTNkOTAzNS1iZTExLTQ2NmEtYjVlMy1kODM3NzM0NjEzZWYiLCJpZCI6MzAxNzg5LCJpYXQiOjE3NDcwNjI1NTZ9.q-qZS-9FS-T2XlQ5XpK1LNXKEY2vNGd9Bpk6200SLTQ';
+  
+  // 创建Cesium viewer
+  viewer = new Cesium.Viewer('cesium-container', {
+    terrainProvider: Cesium.createWorldTerrain(),
+    timeline: false,
+    animation: false,
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    fullscreenButton: false
+  });
+  
+  // 默认飞到铜陵市位置
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(
+      initialView.center[0], // 经度
+      initialView.center[1], // 纬度
+      15000 // 高度（米）
+    ),
+    orientation: {
+      heading: 0.0,
+      pitch: -Cesium.Math.PI_OVER_FOUR,
+      roll: 0.0
+    }
+  });
+  
+  // 隐藏Cesium的Logo和动态帮助信息
+  viewer._cesiumWidget._creditContainer.style.display = 'none';
+}
+
+// 将OpenLayers的POI数据添加到Cesium地图
+function addPOIsToCesium(pois) {
+  // 清除现有实体
+  viewer.entities.removeAll();
+  
+  pois.forEach(poi => {
+    // 添加景点标记
+    viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(poi.lon, poi.lat),
+      billboard: {
+        image: createPinForPOI(poi.type),
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        scale: 0.8
+      },
+      label: {
+        text: poi.name,
+        font: '14px sans-serif',
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        outlineWidth: 2,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -30)
+      },
+      // 存储POI数据用于点击事件
+      properties: {
+        id: poi.id,
+        name: poi.name,
+        type: poi.type,
+        description: poi.description,
+        rating: poi.rating,
+        address: poi.address
+      }
+    });
+  });
+}
+
+// 为景点类型生成不同的图标
+function createPinForPOI(type) {
+  // 创建一个Canvas元素来绘制自定义图标
+  const canvas = document.createElement('canvas');
+  canvas.width = 40;
+  canvas.height = 40;
+  const context = canvas.getContext('2d');
+  
+  // 绘制圆形标记
+  context.beginPath();
+  context.arc(20, 20, 15, 0, 2 * Math.PI);
+  context.fillStyle = getColorByType(type);
+  context.fill();
+  context.lineWidth = 2;
+  context.strokeStyle = '#FFFFFF';
+  context.stroke();
+  
+  // 返回生成的图标URL
+  return canvas.toDataURL();
+}
+
+// 添加二三维切换事件监听
+function initDimensionToggle() {
+  const toggleBtn = document.getElementById('toggle-dimension-btn');
+  const mapContainer = document.getElementById('map');
+  const cesiumContainer = document.getElementById('cesium-container');
+  
+  // 初始化Cesium
+  initCesium();
+  
+  toggleBtn.addEventListener('click', function() {
+    if (is3DMode) {
+      // 切换到二维
+      cesiumContainer.classList.add('fade-out');
+      setTimeout(() => {
+        cesiumContainer.classList.add('hidden');
+        cesiumContainer.classList.remove('fade-out');
+        mapContainer.classList.remove('hidden');
+        mapContainer.classList.add('fade-in');
+      }, 500);
+      
+      toggleBtn.innerHTML = '<i class="fas fa-cube"></i><span>3D</span>';
+      toggleBtn.classList.remove('active');
+      is3DMode = false;
+    } else {
+      // 切换到三维
+      mapContainer.classList.add('fade-out');
+      setTimeout(() => {
+        mapContainer.classList.add('hidden');
+        mapContainer.classList.remove('fade-out');
+        cesiumContainer.classList.remove('hidden');
+        cesiumContainer.classList.add('fade-in');
+        
+        // 更新三维地图中的POI数据
+        updateCesiumPOIs();
+      }, 500);
+      
+      toggleBtn.innerHTML = '<i class="fas fa-map"></i><span>2D</span>';
+      toggleBtn.classList.add('active');
+      is3DMode = true;
+    }
+  });
+}
+
+// 更新三维地图中的POI数据
+function updateCesiumPOIs() {
+  // 获取当前显示的POI数据
+  const features = vectorSource.getFeatures();
+  const pois = features.map(feature => {
+    const coords = feature.getGeometry().getCoordinates();
+    return {
+      id: feature.get('id'),
+      name: feature.get('name'),
+      type: feature.get('type'),
+      description: feature.get('description'),
+      rating: feature.get('rating'),
+      address: feature.get('address'),
+      lon: coords[0],
+      lat: coords[1]
+    };
+  });
+  
+  // 添加到Cesium地图
+  addPOIsToCesium(pois);
+}
+
+// 在文档加载完成后初始化二三维切换功能
+document.addEventListener('DOMContentLoaded', function() {
+  // 在地图初始化之后调用
+  initDimensionToggle();
 });
